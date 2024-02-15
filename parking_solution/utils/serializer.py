@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import parked_slot, parking_slot, user_history, user_review
+from .models import parked_slot, parking_slot, user_history, user_review, reply
 
 
 class User_api(serializers.ModelSerializer):
@@ -27,7 +27,13 @@ class User_history_api(serializers.ModelSerializer):
         model = user_history
 
 
-class User_review_api(serializers.ModelSerializer):
+class Review_api(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = user_review
+
+
+class Reply_api(serializers.ModelSerializer):
+    class Meta:
+        fields = '__all__'
+        model = reply

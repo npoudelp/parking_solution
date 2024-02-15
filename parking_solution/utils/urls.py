@@ -10,6 +10,6 @@ urlpatterns = [
     path('get_slot/', apis.List_parking.as_view(), name='util_list_parking'),
     path('book_slot/', apis.Book_slot.as_view(), name='util_book_slot'),
     path('checkout/', apis.Checkout.as_view(), name='utils_checkout'),
-    path('review/', apis.User_review.as_view(), name='utils_review'),
+    path('review/', apis.Review.as_view(), name='utils_review'),
     path('delete/', apis.delete.as_view()),
 ]

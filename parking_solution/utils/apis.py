@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .serializer import User_api, Parked_slot_api, Parking_slot_api, User_history_api, User_review_api
+from .serializer import User_api, Parked_slot_api, Parking_slot_api, User_history_api, Review_api, Reply_api
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.permissions import IsAuthenticated
-from .models import parking_slot, parked_slot, user_history, user_review
+from .models import parking_slot, parked_slot, user_history, user_review, reply
 from django.utils import timezone
 from datetime import datetime
 import datetime
@@ -223,32 +223,45 @@ class Checkout(APIView):
             , status=400)
         
 
-class User_review(APIView):
-    permission_classes = [IsAuthenticated,]
-
+class Review(APIView):
+    permission_classes = (IsAuthenticated,)
+    
     def get(self, request):
-        review = user_review.objects.filter(user_id=request.user)
-        serialize_review = User_review_api(review, many=True)
-        return Response(serialize_review.data, status=200)
+        try:
+            get_review = user_review.objects.get(user_id=request.user.id)
+            serialize_review = Review_api(get_review, many=False)
+
+            get_reply = reply.objects.filter(review_id=serialize_review.data['id']).order_by('-id')
+            serialize_reply = Reply_api(get_reply, many=True)
+
+            return Response({
+                "review": serialize_review.data,
+                "reply": serialize_reply.data
+            }, status=400)
+        except:
+            return Response("no review available")
+        
     
     def post(self, request):
         try:
-            if not user_review.objects.filter(user_id=request.id).exists():
-                review_data = User_review_api(data=request.data)
-                if review_data.is_valid():
-                    review_data.save(user_id=request.user)
-                    return Response('review added successful', status=200)
-                else:
-                    return Response('data is not valid', status=400)
+            if user_review.objects.filter(user_id=request.user.id).exists():
+                review = user_review.objects.get(user_id=request.user.id)
+                review.review = request.data['review']
+                review.save()
+                return Response("review updated")
+
+            else:
+                user_review.objects.create(review=request.data['review'], user_id=request.user)
+                return Response("review added")
 
         except:
-            return Response('error adding review', status=400)
-
+            return Response("error adding review", status=400)
 
 
 #on during development
 class delete(APIView):
     def post(self, request):
-        parked_slot.objects.all().delete()
-        user_history.objects.all().delete()
+        # parked_slot.objects.all().delete()
+        # user_history.objects.all().delete()
+        user_review.objects.all().delete()
         return Response('parking slot empty', status=200)
